@@ -21,6 +21,7 @@ float freqSteps[25] = {0}; //how large of a step to take every cycle of loop for
 float currentSteps[25] = {0}; //where the key is at in its cycle
 
 int waveMode = 0; //which waveform to use, defined in waves.h
+bool menuButtonPressed = false;
 
 Encoder menuEncoder(ENCODER1, ENCODER2);
 int encoderStep = -999;
@@ -37,6 +38,8 @@ void setup() {
   for(int i=0;i<25;i++) {
     pinMode(keyPins[i], INPUT_PULLDOWN);
   }
+  pinMode(MENUBUTTON, INPUT_PULLDOWN);
+  //TODO: pinmode for encoder?
 
   freqSteps[0] = 138.6/246.3 * 2; //TODO: store frequency data in a different table and change them depending on user input
   freqSteps[1] = 130.8/246.3 * 2;
@@ -46,6 +49,8 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(KEY1), key1ISR, CHANGE); //TODO: attach interrupts for all keys
   attachInterrupt(digitalPinToInterrupt(KEY2), key2ISR, CHANGE);
+
+  attachInterrupt(digitalPinToInterrupt(MENUBUTTON), menuButtonISR, RISING);
 }
 
 //generic function all key ISR will call
@@ -79,6 +84,10 @@ void key23ISR() { updateKey(23, KEY23); }
 void key24ISR() { updateKey(24, KEY24); }
 void key25ISR() { updateKey(25, KEY25); }
 
+void menuButtonISR() {
+  menuButtonPressed = true;
+}
+
 //to drive the LTC1257 digital to analog converter
 void setDAC(unsigned short value) {
   digitalWrite(CLK,HIGH);
@@ -103,15 +112,6 @@ void setDAC(unsigned short value) {
   
 }
 
-//Polling loop
-// void updateKeysDown() {
-//   keysDown[0] = digitalRead(KEY1);
-//   keysDown[1] = digitalRead(KEY2);
-//   keysDown[2] = digitalRead(KEY3);
-//   keysDown[3] = digitalRead(KEY4);
-//   keysDown[4] = digitalRead(KEY5);
-// }
-
 //increment each key's channel if it's pressed down
 void updateChannels() {
   for(int i=0;i<25;i++) {
@@ -128,35 +128,69 @@ void updateChannels() {
 void doSample() {
   sum = 0;
   numDown = 0;
-  if(waveMode == SINE) {
-    for(int i=0;i<25;i++) {
-      if(keysDown[i]) {
-        numDown++;
-        sum += sineWave[(int) currentSteps[i]];
+  switch(waveMode) {
+    case SINE:
+      for(int i=0;i<25;i++) {
+        if(keysDown[i]) {
+          numDown++;
+          sum += sineWave[(int) currentSteps[i]];
+        }
       }
-    }
-  } else if(waveMode == SAWTOOTH) {
-    for(int i=0;i<25;i++) {
-      if(keysDown[i]) {
-        numDown++;
-        sum += sawtoothWave[(int) currentSteps[i]];
+      break;
+    case SAWTOOTH:
+      for(int i=0;i<25;i++) {
+        if(keysDown[i]) {
+          numDown++;
+          sum += sawtoothWave[(int) currentSteps[i]];
+        }
       }
-    }
-  } else if(waveMode == SQUARE) {
-    for(int i=0;i<25;i++) {
-      if(keysDown[i]) {
-        numDown++;
-        sum += squareWave[(int) currentSteps[i]];
+      break;
+    case SQUARE:
+      for(int i=0;i<25;i++) {
+        if(keysDown[i]) {
+          numDown++;
+          sum += squareWave[(int) currentSteps[i]];
+        }
       }
-    }
-  } else if(waveMode == TRIANGLE) {
-    for(int i=0;i<25;i++) {
-      if(keysDown[i]) {
-        numDown++;
-        sum += triangleWave[(int) currentSteps[i]];
+      break;
+    case TRIANGLE:
+      for(int i=0;i<25;i++) {
+        if(keysDown[i]) {
+          numDown++;
+          sum += triangleWave[(int) currentSteps[i]];
+        }
       }
-    }
+      break;
   }
+  // if(waveMode == SINE) {
+  //   for(int i=0;i<25;i++) {
+  //     if(keysDown[i]) {
+  //       numDown++;
+  //       sum += sineWave[(int) currentSteps[i]];
+  //     }
+  //   }
+  // } else if(waveMode == SAWTOOTH) {
+  //   for(int i=0;i<25;i++) {
+  //     if(keysDown[i]) {
+  //       numDown++;
+  //       sum += sawtoothWave[(int) currentSteps[i]];
+  //     }
+  //   }
+  // } else if(waveMode == SQUARE) {
+  //   for(int i=0;i<25;i++) {
+  //     if(keysDown[i]) {
+  //       numDown++;
+  //       sum += squareWave[(int) currentSteps[i]];
+  //     }
+  //   }
+  // } else if(waveMode == TRIANGLE) {
+  //   for(int i=0;i<25;i++) {
+  //     if(keysDown[i]) {
+  //       numDown++;
+  //       sum += triangleWave[(int) currentSteps[i]];
+  //     }
+  //   }
+  // }
   sum = sum / numDown;
   setDAC((int) 2047 * sum + 2048);
 }
@@ -171,11 +205,18 @@ void loop() {
 
     if(newStep > encoderStep) {
       //moved left
+
     } else {
       //moved right
+      
     }
 
     encoderStep = newStep;
+  }
+  if(menuButtonPressed) {
+    menuButtonPressed = false;
+    //menu button was pressed
+
   }
   
 
