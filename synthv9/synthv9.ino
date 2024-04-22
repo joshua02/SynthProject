@@ -110,25 +110,15 @@ void changeOctave(int setOfKeys, int octave) {
 bool newKeyRead;
 //generic function all key ISR will call
 void updateKey(int key, int pinNumber) {
-
+  delay(10);
   newKeyRead = digitalRead(pinNumber);
   if(keysDown[key-1] == 1 && newKeyRead == 0) {
     //key released
     releaseTimes[key-1] = micros();
-    Serial.println(" ");
-    Serial.println(key);
-    Serial.print("freq: ");
-    Serial.print(freqSteps[key-1]);
-    Serial.println("release");
   }
   if (keysDown[key-1] == 0 && newKeyRead == 1) {
     //key pressed
     pressTimes[key-1] = micros();
-    Serial.println(" ");
-    Serial.println(key);
-    Serial.print("freq: ");
-    Serial.print(freqSteps[key-1]);
-    Serial.println("press");
   }
 
   keysDown[key-1] = newKeyRead;
